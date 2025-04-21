@@ -18,6 +18,7 @@ EMAIL_ADDRESS = os.environ.get("VELOCIS_EMAIL")
 EMAIL_PASSWORD = os.environ.get("VELOCIS_PASSWORD")
 RECEIVE_TO = os.environ.get("VELOCIS_RECEIVER") or EMAIL_ADDRESS
 
+
 @app.route("/submit", methods=["POST"])
 def submit():
     data = request.get_json()
@@ -37,7 +38,6 @@ def submit():
     if not re.match(email_pattern, email):
         return jsonify({"status": "error", "message": "Invalid email format."}), 400
 
-
     try:
         sg = SendGridAPIClient(os.environ.get("SENDGRID_API_KEY"))
 
@@ -46,7 +46,7 @@ def submit():
             from_email=os.environ.get("VEL_SENDGRID_FROM"),
             to_emails=os.environ.get("VEL_SENDGRID_TO"),
             subject=f"New Velocis Inquiry from {name}",
-            plain_text_content=f"Name: {name}\nEmail: {email}\n\nMessage:\n{message}"
+            plain_text_content=f"Name: {name}\nEmail: {email}\n\nMessage:\n{message}",
         )
 
         # Email to client
@@ -54,17 +54,23 @@ def submit():
             from_email=os.environ.get("VEL_SENDGRID_FROM"),
             to_emails=email,
             subject="Thanks for reaching out to Velocis!",
-            plain_text_content=f"Hi {name},\n\nThanks for contacting Velocis! We've received your message and will be in touch very soon.\n\n– The Velocis Team"
+            plain_text_content=f"Hi {name},\n\nThanks for contacting Velocis! We've received your message and will be in touch very soon.\n\n– The Velocis Team",
         )
 
         sg.send(message_to_owner)
         sg.send(message_to_client)
 
-        return jsonify({"status": "success", "message": "Thanks! We'll be in touch soon."})
+        return jsonify(
+            {"status": "success", "message": "Thanks! We'll be in touch soon."}
+        )
 
     except Exception as e:
         print("SendGrid error:", str(e))
-        return jsonify({"status": "error", "message": "Submission failed. Try again later."}), 500
+        return jsonify(
+            {"status": "error", "message": "Submission failed. Try again later."}
+        ), 500
+
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
